@@ -7,9 +7,9 @@
 #define MAX_LOADSTRING 100
 
 // Глобальные переменные:
-HINSTANCE hInst;                                // текущий экземпл
+HINSTANCE hInst;                                // текущий экземпляр
 WCHAR szTitle[MAX_LOADSTRING];                  // Текст строки заголовка
-WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса главного окна
+WCHAR szWindowClass[MAX_LOADSTRING];            // Имя класса главного окна
 
 // Отправить объявления функций, включенных в этот модуль кода:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -24,8 +24,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
-
-    // TODO: Разместите код здесь.
 
     // Инициализация глобальных строк
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -76,7 +74,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wc.hInstance      = hInstance;
     wc.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SPPR2TASK6V122));
     wc.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wc.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
     wc.lpszMenuName   = MAKEINTRESOURCEW(IDC_SPPR2TASK6V122);
     wc.lpszClassName  = szWindowClass;
     wc.hIconSm        = LoadIcon(wc.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -117,14 +114,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 //
 //  ФУНКЦИЯ: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
 //  ЦЕЛЬ: Обрабатывает сообщения в главном окне.
-//
-//  WM_COMMAND  - обработать меню приложения
-//  WM_PAINT    - Отрисовка главного окна
-//  WM_DESTROY  - отправить сообщение о выходе и вернуться
-//
-//
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static HWND hListBox; // Список, куда заностся строки из полей.
@@ -146,7 +137,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     #define IDC_LISTBOX 150
     #define IDC_BTN_Choice 151
-    #define IDC_BTN_Exit 152
 
     #define IDC_EDIT1 155
     #define IDC_EDIT2 156
@@ -160,6 +150,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     #define IDC_CHECKBOX4 168
     static int IDC_CheckBoxArray[4]{ IDC_CHECKBOX1, IDC_CHECKBOX2, IDC_CHECKBOX3, IDC_CHECKBOX4 };
 
+    TCHAR pszTextBuff[500];
+
     
 
     switch (message)
@@ -171,11 +163,45 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             switch (wmId)
             {
             case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+                MessageBox(hWnd, _T("Выполнил Поляк А. А"), _T("О программе"),
+                    MB_OK | MB_ICONINFORMATION);
                 break;
+
             case IDM_EXIT:
                 DestroyWindow(hWnd);
                 break;
+
+            case IDCANCEL:
+                DestroyWindow(hWnd);
+                break;
+
+            //Нажаите на конопку Выбор
+            case IDC_BTN_Choice:
+
+                for (int i = 0; i < 4; i++) {
+                    // Получение состояния всех CheckBox
+                   LRESULT res =  SendMessage(hChekBoxesArray[i], BM_GETCHECK, 0, 0);
+                   // Если в CheckBox стоит установлен флажок
+                   if (res == BST_CHECKED) {
+                       // Получение текста из соответствующего поля ввода
+                       int cch = SendMessage(hEditsArray[i], WM_GETTEXT,
+                           (WPARAM)500, (LPARAM)pszTextBuff);
+                       if (cch != 0) {
+                           // Добавления текста в список.
+                           int cch2 = SendMessage(hListBox, LB_ADDSTRING,
+                               (WPARAM)0, (LPARAM)pszTextBuff);
+                           if(cch2 == LB_ERR) MessageBox(hWnd, 
+                               TEXT("Ошибка добавления"), TEXT(""), MB_OK);
+                       }
+                       // Очищение буфера
+                       memset(pszTextBuff, 0, 500);
+
+                   // CheckBox без флажка или с соответствующим пустым полем ввода пропускаются                      
+                   }
+
+                }
+                break;
+
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
@@ -216,7 +242,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
              0L, _T("Button"), _T("Выход"),
              WS_CHILD | WS_BORDER | WS_VISIBLE,
              494, 480, 80, 24, hWnd,
-             (HMENU)IDC_BTN_Exit, hInst, NULL);
+             (HMENU)IDCANCEL, hInst, NULL);
          if (hChoiceButton == 0) return -1;
 
          //Чек-боксы и поля ввода.
@@ -232,15 +258,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
              
              // Чек-боксы
              hChekBoxesArray[i] = CreateWindowEx(
-                 0L, _T("Button"), _T(""),
-                 BS_CHECKBOX | WS_CHILD | WS_VISIBLE | BST_CHECKED,
-                 30, posY, 20, 20, hWnd,
+                 0, _T("Button"), _T(""),
+                 WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX  | BS_FLAT,
+                 20, posY, 20, 20, hWnd,
                  (HMENU)IDC_CheckBoxArray[i], hInst, NULL);
              if (hChekBoxesArray[i] == 0) return -1;
-
+                     
              posY += 50;
          }
-
 
         }
         return 0;
@@ -252,22 +277,4 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-// Обработчик сообщений для окна "О программе".
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
 
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
-}
