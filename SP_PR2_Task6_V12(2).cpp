@@ -7,7 +7,7 @@
 #define MAX_LOADSTRING 100
 
 // Глобальные переменные:
-HINSTANCE hInst;                                // текущий экземпляр
+HINSTANCE hInst;                                // текущий экземпл
 WCHAR szTitle[MAX_LOADSTRING];                  // Текст строки заголовка
 WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса главного окна
 
