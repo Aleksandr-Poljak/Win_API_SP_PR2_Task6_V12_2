@@ -220,17 +220,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
          if (hChoiceButton == 0) return -1;
 
          //Чек-боксы и поля ввода.
-         int editYpos = 100;
+         int posY = 100;
          for (int i = 0; i < 4; i++) {
              //Поля ввода
              hEditsArray[i] = CreateWindowEx(
                  0L, _T("Edit"), _T("Введите текст"),
                  WS_CHILD | WS_BORDER | WS_VISIBLE | ES_LEFT | ES_AUTOHSCROLL,
-                 60, editYpos, 190, 30, hWnd,
+                 60, posY, 190, 30, hWnd,
                  (HMENU)IDC_EditsArray[i], hInst, NULL);
              if (hEditsArray[i] == 0) return -1;
-             else { editYpos += 50; }
+             
+             // Чек-боксы
+             hChekBoxesArray[i] = CreateWindowEx(
+                 0L, _T("Button"), _T(""),
+                 BS_CHECKBOX | WS_CHILD | WS_VISIBLE | BST_CHECKED,
+                 30, posY, 20, 20, hWnd,
+                 (HMENU)IDC_CheckBoxArray[i], hInst, NULL);
+             if (hChekBoxesArray[i] == 0) return -1;
 
+             posY += 50;
          }
 
 
