@@ -64,23 +64,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 //
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
-    WNDCLASSEXW wcex;
+    WNDCLASSEXW wc;
+    HBRUSH hbr = CreateSolidBrush(RGB(204, 255, 255));
 
-    wcex.cbSize = sizeof(WNDCLASSEX);
+    wc.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SPPR2TASK6V122));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_SPPR2TASK6V122);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wc.style          = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc    = WndProc;
+    wc.cbClsExtra     = 0;
+    wc.cbWndExtra     = 0;
+    wc.hInstance      = hInstance;
+    wc.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SPPR2TASK6V122));
+    wc.hCursor        = LoadCursor(nullptr, IDC_ARROW);
+    wc.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+    wc.lpszMenuName   = MAKEINTRESOURCEW(IDC_SPPR2TASK6V122);
+    wc.lpszClassName  = szWindowClass;
+    wc.hIconSm        = LoadIcon(wc.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wc.hbrBackground = hbr;
 
-    return RegisterClassExW(&wcex);
+    return RegisterClassExW(&wc);
 }
 
 //
@@ -96,9 +98,11 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Сохранить маркер экземпляра в глобальной переменной
-
+   wcscpy_s(szTitle, MAX_LOADSTRING, L"Индивидуальное задание 6");
+   
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+      200, 200, 600, 600,
+       nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
@@ -123,6 +127,41 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static HWND hListBox; // Список, куда заностся строки из полей.
+    static HWND hChoiceButton; // Кнопка выбор
+    static HWND hExitButton; // Кнопка выход
+   
+    static HWND hEdit1; // Поле ввода 1
+    static HWND hEdit2; // Поле ввода 2
+    static HWND hEdit3; // Поле ввода 3
+    static HWND hEdit4; // Поле ввода 4
+    static HWND hEditsArray[4] {hEdit1, hEdit2, hEdit3, hEdit4};
+  
+    // Чек-боксы выбора строк.
+    static HWND hCheckBox1; 
+    static HWND hCheckBox2;
+    static HWND hCheckBox3;
+    static HWND hCheckBox4;
+    static HWND hChekBoxesArray[4]{ hCheckBox1, hCheckBox2, hCheckBox3, hCheckBox4};
+
+    #define IDC_LISTBOX 150
+    #define IDC_BTN_Choice 151
+    #define IDC_BTN_Exit 152
+
+    #define IDC_EDIT1 155
+    #define IDC_EDIT2 156
+    #define IDC_EDIT3 157
+    #define IDC_EDIT4 158
+    static int IDC_EditsArray[4]{ IDC_EDIT1, IDC_EDIT2, IDC_EDIT3, IDC_EDIT4 };
+
+    #define IDC_CHECKBOX1 165
+    #define IDC_CHECKBOX2 166
+    #define IDC_CHECKBOX3 167
+    #define IDC_CHECKBOX4 168
+    static int IDC_CheckBoxArray[4]{ IDC_CHECKBOX1, IDC_CHECKBOX2, IDC_CHECKBOX3, IDC_CHECKBOX4 };
+
+    
+
     switch (message)
     {
     case WM_COMMAND:
@@ -153,6 +192,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+
+    case WM_CREATE:
+        {
+        // Окно списка
+        hListBox = CreateWindowEx(
+            0L, _T("ListBox"), _T("Список"),
+            WS_CHILD | WS_BORDER | WS_VISIBLE,
+            270, 50, 300, 300, hWnd,
+            (HMENU)IDC_LISTBOX, hInst, NULL);
+         if (hListBox == 0) return -1;
+
+         //Кнопка выбора
+         hChoiceButton = CreateWindowEx(
+             0L, _T("Button"), _T("Выбор"),
+             WS_CHILD | WS_BORDER | WS_VISIBLE,
+             20, 480, 80, 24, hWnd,
+             (HMENU)IDC_BTN_Choice, hInst, NULL);
+         if (hChoiceButton == 0) return -1;
+
+         // Кнопка выход
+         hChoiceButton = CreateWindowEx(
+             0L, _T("Button"), _T("Выход"),
+             WS_CHILD | WS_BORDER | WS_VISIBLE,
+             494, 480, 80, 24, hWnd,
+             (HMENU)IDC_BTN_Exit, hInst, NULL);
+         if (hChoiceButton == 0) return -1;
+
+         //Чек-боксы и поля ввода.
+         int editYpos = 100;
+         for (int i = 0; i < 4; i++) {
+             //Поля ввода
+             hEditsArray[i] = CreateWindowEx(
+                 0L, _T("Edit"), _T("Введите текст"),
+                 WS_CHILD | WS_BORDER | WS_VISIBLE | ES_LEFT | ES_AUTOHSCROLL,
+                 60, editYpos, 190, 30, hWnd,
+                 (HMENU)IDC_EditsArray[i], hInst, NULL);
+             if (hEditsArray[i] == 0) return -1;
+             else { editYpos += 50; }
+
+         }
+
+
+        }
+        return 0;
+        break;
+
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
